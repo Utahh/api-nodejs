@@ -1,57 +1,44 @@
-'use strict';
-const { DataTypes, Model } = require('sequelize');
-
-module.exports = (sequelize) => {
-  class Pessoas extends Model {
-    static associate(models) {
-      Pessoas.hasMany(models.Turmas, {
-        foreignKey: 'docente_id',
-      });
-      Pessoas.hasMany(models.Matriculas, {
-        foreignKey: 'estudante_id',
-        scope: { status: 'confirmado' },
-        as: 'aulasMatriculadas',
-      });
-    }
-  }
-
-  Pessoas.init(
-    {
-      nome: {
-        type: DataTypes.STRING,
-        validate: {
-          len: {
-            args: [3],
-            msg: 'O campo nome deve ter mais de 3 caracteres',
-          },
-        },
-      },
-      ativo: DataTypes.BOOLEAN,
-      email: {
-        type: DataTypes.STRING,
-        validate: {
-          isEmail: {
-            args: true,
-            msg: 'Email inválido',
-          },
-        },
-      },
-      role: DataTypes.STRING,
+'use strict'
+module.exports = (sequelize, DataTypes) => {
+  const Pessoas = sequelize.define('Pessoas', {
+    nome: {
+      type: DataTypes.STRING,
+      validate: {
+        funcaoValidadora: function(dado) {
+          if (dado.length < 3) throw new Error('o campo nome deve ter mais de 3 caracteres')
+        }
+      }
     },
-    {
-      sequelize,
-      paranoid: true,
-      defaultScope: {
-        where: { ativo: true },
-      },
-      modelName: 'Pessoas',
-      tableName: 'Pessoas', // Nome da tabela no banco de dados (opcional)
-      timestamps: true, // Se deseja incluir timestamps created_at e updated_at (opcional)
-      scopes: {
-        all: {},
-      },
+    ativo: DataTypes.BOOLEAN,
+    email: {
+      type: DataTypes.STRING,
+      validate: {
+        isEmail: {
+          args: true,
+          msg: 'dado do tipo e-mail inválido'
+        }
+      }
+    },
+    role: DataTypes.STRING
+  }, { 
+    paranoid: true,
+    defaultScope: {
+      where: { ativo: true }
+    },  
+    scopes: {
+      todos: { where: {} },
+      //etc: { constraint: valor }
     }
-  );
-
-  return Pessoas;
-};
+  })
+  Pessoas.associate = function(models) {
+    Pessoas.hasMany(models.Turmas, {
+      foreignKey: 'docente_id'
+    }) 
+    Pessoas.hasMany(models.Matriculas, {
+      foreignKey: 'estudante_id',
+      scope: { status: 'confirmado' },
+      as: 'aulasMatriculadas'
+    })
+  }
+  return Pessoas
+}
