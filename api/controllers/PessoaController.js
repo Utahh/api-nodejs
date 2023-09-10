@@ -1,15 +1,26 @@
 const database = require('../models');
+const { Pessoas } = require('../models');
 
 class PessoaController {
-    static async pegaTodasAsPessoas(req, res) {
+    static async pegaPessoasAtivas(req, res) {
         try {
-            const todasAsPessoas = await database.Pessoas.findAll();
-            return res.status(200).json(todasAsPessoas);
+            const pessoasAtivas = await database.Pessoas.findAll();
+            return res.status(200).json(pessoasAtivas);
         }catch (err) {
             return res.status(500).json(err.message);
         }
 
     }
+
+    static async pegaTodasAsPessoas(req, res) {
+        try {
+            const todasAsPessoas = await database.Pessoas.scope('all').findAll();
+            return res.status(200).json(todasAsPessoas);
+        }catch (err) {
+            return res.status(500).json(err.message);
+        }
+    }
+
 
     static async pegaUmaPessoa(req, res) {
         const {id} = req.params;
@@ -30,7 +41,7 @@ class PessoaController {
             const novaPessoaCriada = await database.Pessoas.create(novaPessoa);
             return res.status(200).json(novaPessoaCriada);
         } catch (error) {
-            return res.status(500).json(err.message);
+            return res.status(500).json(error.message);
         }
     }
 
@@ -55,6 +66,16 @@ class PessoaController {
         try {
             await database.Pessoas.destroy({where: {id: Number(id)}});
             return res.status(200).json({ message: `id ${id} deletado`});
+        } catch (error) {
+            return res.status(500).json(err.message);
+        }
+    }
+
+    static async restauraPessoas(req, res) {
+        const {id} = req.params;
+        try {
+            await database.Pessoas.restore({where: {id: Number(id)}});
+            return res.status(200).json({ message: `id ${id} restaurado`});
         } catch (error) {
             return res.status(500).json(err.message);
         }
@@ -120,6 +141,17 @@ class PessoaController {
             return res.status(200).json({ mensagem: `O ID ${matriculaId} foi excluído` });
         } catch (erro) {
             return res.status(500).json(erro.message);
+        }
+    }
+
+    static async pegaMatriculas(req, res) {
+        const {estudanteId} = req.params;
+        try {
+            const pessoa = await database.Pessoas.findOne({ where: {id: Number(estudanteId)}});
+            const matriculas= await pessoa.getAulasMatriculadas();
+            return res.status(200).json(matriculas);
+        } catch (err) {
+            return res.status(500).json(err.message);
         }
     }
     
